@@ -5,4 +5,4 @@ tipidee-config
 LIBEXEC_TARGETS := \
 tipidee-config-preprocess
 
-LIB_DEFS := TIPIDEE=tipidee
+LIB_DEFS := TIPIDEE=tipidee TIPIDEEWS=tipideews

@@ -13,5 +13,6 @@
 #include <tipidee/rql.h>
 #include <tipidee/uri.h>
 #include <tipidee/util.h>
+#include <tipidee/ws.h>
 
 #endif
