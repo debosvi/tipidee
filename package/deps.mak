@@ -78,14 +78,19 @@ libtipidee.so.xyzzy: EXTRA_LIBS := -lskarnet
 libtipidee.so.xyzzy: src/libtipidee/tipidee_conf_free.lo src/libtipidee/tipidee_conf_get.lo src/libtipidee/tipidee_conf_get_argv.lo src/libtipidee/tipidee_conf_get_content_type.lo src/libtipidee/tipidee_conf_get_errorfile.lo src/libtipidee/tipidee_conf_get_redirection.lo src/libtipidee/tipidee_conf_get_resattr.lo src/libtipidee/tipidee_conf_get_resattr1.lo src/libtipidee/tipidee_conf_get_responseheaders.lo src/libtipidee/tipidee_conf_get_string.lo src/libtipidee/tipidee_conf_get_uint32.lo src/libtipidee/tipidee_conf_init.lo src/libtipidee/tipidee_headers_get_content_length.lo src/libtipidee/tipidee_headers_init.lo src/libtipidee/tipidee_headers_parse.lo src/libtipidee/tipidee_headers_search.lo src/libtipidee/tipidee_log_answer.lo src/libtipidee/tipidee_log_exit.lo src/libtipidee/tipidee_log_resource.lo src/libtipidee/tipidee_log_request.lo src/libtipidee/tipidee_log_start.lo src/libtipidee/tipidee_method.lo src/libtipidee/tipidee_response_error_nofile.lo src/libtipidee/tipidee_response_file.lo src/libtipidee/tipidee_response_header_date.lo src/libtipidee/tipidee_response_header_date_fmt.lo src/libtipidee/tipidee_response_header_lastmodified.lo src/libtipidee/tipidee_response_header_preparebuiltin.lo src/libtipidee/tipidee_response_header_writeall.lo src/libtipidee/tipidee_response_header_writemerge.lo src/libtipidee/tipidee_response_status.lo src/libtipidee/tipidee_rql_read.lo src/libtipidee/tipidee_uri_parse.lo src/libtipidee/tipidee_util_chunked_read.lo src/libtipidee/tipidee_util_defaulttext.lo src/libtipidee/tipidee_util_httpdate.lo
 
 # websocket lib
-src/libtipideews/compute_sec_ws_accept.o src/libtipideews/compute_sec_ws_accept.lo: src/libtipideews/compute_sec_ws_accept.c src/include/tipidee/conf.h
+src/libtipideews/ws_manage_websocket.o src/libtipideews/ws_manage_websocket.lo: src/libtipideews/ws_manage_websocket.c src/include/tipidee/conf.h
+src/libtipideews/ws_compute_sec_ws_accept.o src/libtipideews/ws_compute_sec_ws_accept.lo: src/libtipideews/ws_compute_sec_ws_accept.c src/include/tipidee/conf.h
+src/libtipideews/ws_exec_helper.o src/libtipideews/ws_exec_helper.lo: src/libtipideews/ws_exec_helper.c src/include/tipidee/conf.h
+src/libtipideews/ws_data_mask.o src/libtipideews/ws_data_mask.lo: src/libtipideews/ws_data_mask.c src/include/tipidee/conf.h
+src/libtipideews/ws_handshake.o src/libtipideews/ws_handshake.lo: src/libtipideews/ws_handshake.c src/include/tipidee/conf.h
+src/libtipideews/ws_mainstream.o src/libtipideews/ws_mainstream.lo: src/libtipideews/ws_mainstream.c src/include/tipidee/conf.h
 
 ifeq ($(strip $(STATIC_LIBS_ARE_PIC)),)
-libtipideews.a.xyzzy: src/libtipideews/compute_sec_ws_accept.o
+libtipideews.a.xyzzy: src/libtipideews/ws_manage_websocket.o src/libtipideews/ws_compute_sec_ws_accept.o src/libtipideews/ws_exec_helper.o src/libtipideews/ws_data_mask.o src/libtipideews/ws_handshake.o src/libtipideews/ws_mainstream.lo
 else
-libtipideews.a.xyzzy: src/libtipideews/compute_sec_ws_accept.lo
+libtipideews.a.xyzzy: src/libtipideews/ws_manage_websocket.lo src/libtipideews/ws_compute_sec_ws_accept.lo src/libtipideews/ws_exec_helper.lo src/libtipideews/ws_data_mask.lo src/libtipideews/ws_handshake.lo src/libtipideews/ws_mainstream.lo
 endif
 
 tipideed: EXTRA_LIBS := -lskarnet
-tipideed: src/tipideed/tipideed.o src/tipideed/cgi.o src/tipideed/harden.o src/tipideed/log.o src/tipideed/options.o src/tipideed/regular.o src/tipideed/responses.o src/tipideed/send_file.o src/tipideed/tipideed.o src/tipideed/trace.o libtipidee.a.xyzzy libtipideews.a.xyzzy libcrypto.a
+tipideed: src/tipideed/tipideed.o src/tipideed/cgi.o src/tipideed/harden.o src/tipideed/log.o src/tipideed/options.o src/tipideed/regular.o src/tipideed/responses.o src/tipideed/send_file.o src/tipideed/tipideed.o src/tipideed/trace.o libtipidee.a.xyzzy libtipideews.a.xyzzy
 INTERNAL_LIBS :=

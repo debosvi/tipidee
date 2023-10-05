@@ -453,46 +453,21 @@ int main (int argc, char const *const *argv, char const *const *envp)
     if (tcoding != TIPIDEE_TRANSFERCODING_NONE && rql.m != TIPIDEE_METHOD_POST)
       eexit_400(&rql, "only POST requests can have an entity body") ;
 
+    // websocket
     x = tipidee_headers_search(&hdr, "Connection") ;
     if (x && !strncmp(x, "Upgrade", 7))
     {
-      x = tipidee_headers_search(&hdr, "Upgrade") ;
-      if (x && !strncmp(x, "websocket", 8))
-      {
-        x = tipidee_headers_search(&hdr, "Sec-WebSocket-Key") ;
-        if (x)
-        {
-          char accept[1024];
-          compute_sec_ws_accept(x, strlen(x), accept, 1024);
-
-          buffer_putsnoflush(buffer_1, "HTTP/1.1 101 Switching Protocols\x0d\x0a");
-          buffer_putsnoflush(buffer_1, "Upgrade: WebSocket\x0d\x0a");
-          buffer_putsnoflush(buffer_1, "Connection: Upgrade\x0d\x0a");
-          buffer_putsnoflush(buffer_1, "Sec-WebSocket-Accept: ");
-          buffer_putsnoflush(buffer_1, accept);
-          buffer_putsnoflush(buffer_1, "\x0d\x0a");
-          // buffer_putsnoflush(buffer_1, "Sec-WebSocket-Protocol: websocket\x0d\x0a");
-          buffer_putsnoflush(buffer_1, "\x0d\x0a");
-          {
-            tain deadline ;
-            tain_add_g(&deadline, &g.writetto) ;
-            if (!buffer_timed_flush_g(buffer_1, &deadline))
-              strerr_diefu1sys(111, "write to stdout") ;
-          }
-          continue;
-        }
-        else {
-          strerr_warnfu1sys("no websocket key provided") ;
-        }
-
+      int r=ws_manage_websocket(&hdr, &g.readtto, &g.writetto);
+      if(r) {
+          strerr_warn("websocket management complete") ;
+          log_and_exit(0);
       }
-      else {
-        strerr_warnfu2sys("http upgrade %s not managed", x) ;
-      }
+
+      exit_400(&rql, "syntax error in websocket management") ;
     }
-    else {
-      strerr_warnfu2sys("http connection %s not managed", x) ;
-    }
+    // else {
+    //   strerr_warnfu2sys("websocket connection %s not managed", x) ;
+    // }
 
 
     switch (rql.m)
