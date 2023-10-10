@@ -15,6 +15,8 @@ int ws_handshake(char const* key, tain const* writetto) {
     buffer_putsnoflush(buffer_1, "Sec-WebSocket-Accept: ");
     buffer_putnoflush(buffer_1, sa.s, sa.len);
     buffer_putsnoflush(buffer_1, "\x0d\x0a");
+    // buffer_putsnoflush(buffer_1, "Sec-WebSocket-Version: 5\x0d\x0a");
+    // buffer_putsnoflush(buffer_1, "Sec-WebSocket-Extension: mux\x0d\x0a");
     // buffer_putsnoflush(buffer_1, "Sec-WebSocket-Protocol: websocket\x0d\x0a");
     buffer_putsnoflush(buffer_1, "\x0d\x0a");
 
