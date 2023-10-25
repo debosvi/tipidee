@@ -453,23 +453,6 @@ int main (int argc, char const *const *argv, char const *const *envp)
     if (tcoding != TIPIDEE_TRANSFERCODING_NONE && rql.m != TIPIDEE_METHOD_POST)
       eexit_400(&rql, "only POST requests can have an entity body") ;
 
-    // websocket
-    x = tipidee_headers_search(&hdr, "Connection") ;
-    if (x && !strncmp(x, "Upgrade", 7))
-    {
-      int r=ws_manage_websocket(&hdr, &g.readtto, &g.writetto);
-      if(r) {
-          strerr_warn("websocket management complete") ;
-          log_and_exit(0);
-      }
-
-      exit_400(&rql, "syntax error in websocket management") ;
-    }
-    // else {
-    //   strerr_warnfu2sys("websocket connection %s not managed", x) ;
-    // }
-
-
     switch (rql.m)
     {
       case TIPIDEE_METHOD_GET :

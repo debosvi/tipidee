@@ -92,5 +92,25 @@ libtipideews.a.xyzzy: src/libtipideews/ws_manage_websocket.lo src/libtipideews/w
 endif
 
 tipideed: EXTRA_LIBS := -lskarnet
-tipideed: src/tipideed/tipideed.o src/tipideed/cgi.o src/tipideed/harden.o src/tipideed/log.o src/tipideed/options.o src/tipideed/regular.o src/tipideed/responses.o src/tipideed/send_file.o src/tipideed/tipideed.o src/tipideed/trace.o libtipidee.a.xyzzy libtipideews.a.xyzzy
+tipideed: \
+	src/tipideed/tipideed.o \
+	src/tipideed/cgi.o \
+	src/tipideed/harden.o \
+	src/tipideed/log.o \
+	src/tipideed/options.o \
+	src/tipideed/regular.o \
+	src/tipideed/responses.o \
+	src/tipideed/send_file.o \
+	src/tipideed/trace.o \
+	libtipidee.a.xyzzy
+
+websocketd: EXTRA_LIBS := -lskarnet
+websocketd: \
+	src/websocketd/websocketd.o \
+	src/websocketd/log.o \
+	src/websocketd/responses.o \
+	src/websocketd/trace.o \
+	libtipidee.a.xyzzy \
+	libtipideews.a.xyzzy
+
 INTERNAL_LIBS :=

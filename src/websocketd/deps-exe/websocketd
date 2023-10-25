@@ -1,0 +1,8 @@
+log.o
+options.o
+responses.o
+websocketd.o
+trace.o
+libtipidee.a.xyzzy
+libtipideews.a.xyzzy
+-lskarnet

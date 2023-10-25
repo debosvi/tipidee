@@ -1,5 +1,6 @@
 BIN_TARGETS := \
 tipideed \
+websocketd \
 tipidee-config
 
 LIBEXEC_TARGETS := \
