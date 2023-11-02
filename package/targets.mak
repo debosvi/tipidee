@@ -1,6 +1,7 @@
 BIN_TARGETS := \
 tipideed \
 websocketd \
+ws-handshake-client \
 tipidee-config
 
 LIBEXEC_TARGETS := \

@@ -1,4 +1,5 @@
 tipideed			0755
 websocketd			0755
+ws-handshake-client			0755
 tipidee-config-preprocess	0755
 tipidee-config			0755
