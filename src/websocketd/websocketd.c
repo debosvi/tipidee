@@ -30,7 +30,7 @@
 #include <tipidee/tipidee.h>
 #include "tipideed-internal.h"
 
-#define USAGE "tipideed [ -v verbosity ] [ -f cdbfile ] [ -d basedir ] [ -R ] [ -U ]"
+#define USAGE "websocketd [ -v verbosity ] [ -f cdbfile ] [ -d basedir ] [ -R ] [ -U ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 #define dienomem() strerr_diefu1sys(111, "stralloc_catb")
 
@@ -45,9 +45,15 @@ static void sigchld_handler (int sig)
   wait_reap() ;
 }
 
-static inline void prep_env (void)
+void log_and_exit (int e)
 {
-  static char const basevars[] = "PROTO\0TCPCONNNUM\0GATEWAY_INTERFACE=CGI/1.1\0SERVER_PROTOCOL=HTTP/1.1\0SERVER_SOFTWARE=tipidee/" TIPIDEE_VERSION ;
+  tipidee_log_exit(g.logv, e) ;
+  _exit(e) ;
+}
+
+static inline void prep_env (size_t *remoteip, size_t *remotehost)
+{
+  static char const basevars[] = "PROTO\0TCPCONNNUM\0GATEWAY_INTERFACE=CGI/1.1\0SERVER_SOFTWARE=tipidee/" TIPIDEE_VERSION ;
   static char const sslvars[] = "SSL_PROTOCOL\0SSL_CIPHER\0SSL_TLS_SNI_SERVERNAME\0SSL_PEER_CERT_HASH\0SSL_PEER_CERT_SUBJECT\0HTTPS=on" ;
   char const *x = getenv("SSL_PROTOCOL") ;
   size_t protolen ;
@@ -77,7 +83,6 @@ static inline void prep_env (void)
     if (!uint160_scan(x, &g.defaultport)) strerr_dieinvalid(100, var) ;
     if (!stralloc_catb(&g.sa, var, protolen + 10)
      || !stralloc_catb(&g.sa, "SERVER_PORT=", 12)) dienomem() ;
-    g.localport = g.sa.len ;
     m = uint16_fmt(fmt, g.defaultport) ; fmt[m++] = 0 ;
     if (!stralloc_catb(&g.sa, fmt, m)) dienomem() ;
 
@@ -87,7 +92,6 @@ static inline void prep_env (void)
     if (!ip46_scan(x, &ip)) strerr_dieinvalid(100, var) ;
     if (!stralloc_catb(&g.sa, var, protolen + 8)
      || !stralloc_catb(&g.sa, "SERVER_ADDR=", 12)) dienomem() ;
-    g.localip = g.sa.len ;
     m = ip46_fmt(fmt, &ip) ; fmt[m++] = 0 ;
     if (!stralloc_catb(&g.sa, fmt, m)) dienomem() ;
 
@@ -105,7 +109,6 @@ static inline void prep_env (void)
     if (!uint160_scan(x, &port)) strerr_dieinvalid(100, var) ;
     if (!stralloc_catb(&g.sa, var, protolen + 11)
      || !stralloc_catb(&g.sa, "REMOTE_PORT=", 12)) dienomem() ;
-    g.remoteport = g.sa.len ;
     m = uint16_fmt(fmt, port) ; fmt[m++] = 0 ;
     if (!stralloc_catb(&g.sa, fmt, m)) dienomem() ;
 
@@ -115,7 +118,7 @@ static inline void prep_env (void)
     if (!ip46_scan(x, &ip)) strerr_dieinvalid(100, var) ;
     if (!stralloc_catb(&g.sa, var, protolen + 9)
      || !stralloc_catb(&g.sa, "REMOTE_ADDR=", 12)) dienomem() ;
-    g.remoteip = g.sa.len ;
+    *remoteip = g.sa.len ;
     m = ip46_fmt(fmt, &ip) ; fmt[m++] = 0 ;
     if (!stralloc_catb(&g.sa, fmt, m)) dienomem() ;
 
@@ -123,7 +126,7 @@ static inline void prep_env (void)
     x = getenv(var) ;
     if ((x && !stralloc_catb(&g.sa, var, protolen + 11))
      || !stralloc_catb(&g.sa, "REMOTE_HOST=", 12)) dienomem() ;
-    g.remotehost = g.sa.len ;
+    *remotehost = g.sa.len ;
     if (x)
     {
       if (!stralloc_cats(&g.sa, x)) dienomem() ;
@@ -132,7 +135,7 @@ static inline void prep_env (void)
     {
       if (!stralloc_readyplus(&g.sa, m + 2)) dienomem() ;
       if (ip46_is6(&ip)) stralloc_catb(&g.sa, "[", 1) ;
-      stralloc_catb(&g.sa, g.sa.s + g.remoteip, m) ;
+      stralloc_catb(&g.sa, g.sa.s + *remoteip, m) ;
       if (ip46_is6(&ip)) stralloc_catb(&g.sa, "]", 1) ;
     }
     if (!stralloc_0(&g.sa)) dienomem() ;
@@ -145,6 +148,7 @@ static inline void prep_env (void)
        || !stralloc_cats(&g.sa, x) || !stralloc_0(&g.sa)) dienomem() ;
   }
 }
+
 
 static uint32_t get_uint32 (char const *key)
 {
@@ -161,18 +165,159 @@ static void inittto (tain *tto, char const *key)
   else *tto = tain_infinite_relative ;
 }
 
+																										   
+ 
+					  
+						  
+					  
+						
+					
+			 
+				  
+							
+								
+									  
+								 
+				  
+	 
+								
+									  
+								 
+							  
+														  
+	 
+ 
+								 
+																										  
+							
+			
+ 
+
+																												  
+ 
+						 
+																										  
+																			   
+																						  
+																		  
+																								   
+				  
+ 
+
+																		  
+ 
+													
+						   
+								  
+															   
+											 
+						  
+						 
+ 
+
+																																		   
+ 
+											 
+									   
+										  
+							
+				  
+												  
+								   
+												   
+								
+
+				  
+
+									   
+	 
+													   
+																							
+																				
+		  
+	 
+							 
+				
+	 
+
+								 
+
+						  
+																	   
+										   
+			
+	 
+									
+																	   
+				   
+									 
+					
+	   
+					  
+											   
+															
+																  
+															 
+	   
+	 
+							 
+	 
+						  
+													   
+															
+											
+	 
+													   
+													   
+													   
+													 
+					  
+	 
+									  
+																													 
+
+									  
+
+									  
+									   
+															
+													  
+														
+
+									   
+																		 
+
+														
+
+									 
+																								 
+
+															   
+			   
+										
+						 
+												
+												
+									
+										
+													  
+ 
+
 int main (int argc, char const *const *argv, char const *const *envp)
 {
-  // stralloc bodysa = STRALLOC_ZERO ;
+  size_t remoteip, remotehost ;
+  char const *x ;
+  uint32_t n ;							   
+				 
+			  
   char progstr[14 + PID_FMT] = "tipideed: pid " ;
   progstr[14 + pid_fmt(progstr + 14, getpid())] = 0 ;
   PROG = progstr ;
 
   {
     char const *conffile = TIPIDEE_SYSCONFPREFIX "tipidee.conf.cdb" ;
-    // char const *newroot = 0 ;
+	int gotv = 0 ;						 
     unsigned int h = 0 ;
-    int gotv = 0 ;
     subgetopt l = SUBGETOPT_ZERO ;
 
     for (;;)
@@ -186,12 +331,10 @@ int main (int argc, char const *const *argv, char const *const *envp)
           unsigned int n ;
           if (!uint0_scan(l.arg, &n)) dieusage() ;
           if (n > 7) n = 7 ;
-          g.verbosity = n ;
-          gotv = 1 ;
+          g.logv = n ;
           break ;
         }
         case 'f' : conffile = l.arg ; break ;
-    //    case 'd' : newroot = l.arg ; break ;
         case 'R' : h |= 3 ; break ;
         case 'U' : h |= 1 ; break ;
         default : dieusage() ;
@@ -202,32 +345,38 @@ int main (int argc, char const *const *argv, char const *const *envp)
     g.envlen = env_len(envp) ;
     if (!tipidee_conf_init(&g.conf, conffile))
       strerr_diefu2sys(111, "find configuration in ", conffile) ;
-    // if (newroot && chdir(newroot) == -1)
-      // strerr_diefu2sys(111, "chdir to ", newroot) ;
-    // tipideed_harden(h) ;
-    if (!gotv) g.verbosity = get_uint32("G:verbosity") ;
+	if (!gotv) g.logv = get_uint32("G:logv") ;
   }
 
-  prep_env() ;
+  prep_env(&remoteip, &remotehost) ;
   inittto(&g.readtto, "G:read_timeout") ;
   inittto(&g.writetto, "G:write_timeout") ;
   inittto(&g.cgitto, "G:cgi_timeout") ;
   g.maxrqbody = get_uint32("G:max_request_body_length") ;
   g.maxcgibody = get_uint32("G:max_cgi_body_length") ;
-  {
-    unsigned int n = tipidee_conf_get_argv(&g.conf, "G:index_file", g.indexnames, 16, &g.indexlen) ;
-    if (!n) strerr_dief3x(102, "bad", " config value for ", "G:index_file") ;
-    g.indexn = n-1 ;
-  }
+  n = tipidee_conf_get_argv(&g.conf, "G:index-file", g.indexnames, 16, &g.indexlen) ;
+  if (!n) strerr_dief3x(102, "bad", " config value for ", "G:index_file") ;
+  g.indexn = n-1 ;
+
+  x = tipidee_conf_get_responseheaders(&g.conf, "G:response_headers", &n, &g.rhdrn) ;
+  if (!x) strerr_diefu3sys(102, "get", " config value for ", "G:response_headers") ;
+
+  tipidee_response_header rhdr[n ? n : 1] ;  /* should start a block but that's a lot of editing */
+  if (!tipidee_response_header_preparebuiltin(rhdr, g.rhdrn, x, n))
+    strerr_dief3x(102, "bad", " config value for ", "G:response_headers") ;
+  g.rhdr = rhdr ;
 
   if (ndelay_on(0) == -1 || ndelay_on(1) == -1)
     strerr_diefu1sys(111, "set I/O nonblocking") ;
   if (!sig_catch(SIGCHLD, &sigchld_handler))
     strerr_diefu1sys(111, "set SIGCHLD handler") ;
+  if (!sig_altignore(SIGPIPE))
+    strerr_diefu1sys(111, "ignore SIGPIPE") ;
   if (!tain_now_set_stopwatch_g())
     strerr_diefu1sys(111, "initialize clock") ;
 
-  log_start() ;
+
+  tipidee_log_start(g.logv, g.sa.s + remoteip, g.sa.s + remotehost) ;
 
 
  /* Main loop */
@@ -247,17 +396,19 @@ int main (int argc, char const *const *argv, char const *const *envp)
 
     tain_add_g(&deadline, &g.readtto) ;
     
+
     e = tipidee_rql_read_g(buffer_0, uribuf, URI_BUFSIZE, &content_length, &rql, &deadline) ;
     switch (e)
     {
-      case -1 : log_and_exit(1) ;  /* Malicious or shitty client */
+      case -1 : log_and_exit(1) ;  /* bad client */
       case 0 : break ;
-      case 99 : g.cont = 0 ; continue ;  /* timeout, it's ok */
-      case 400 : exit_400(&rql, "Syntax error in request line") ;
+      case 98 :  /* client exited */
+      case 99 : g.cont = 0 ; continue ;  /* timeout */
+      case 400 : eexit_400(&rql, "Syntax error in request line") ;
       default : strerr_dief2x(101, "can't happen: ", "unknown tipidee_rql_read return code") ;
     }
     if (rql.http_major != 1) log_and_exit(1) ;
-    if (rql.http_minor > 1) exit_400(&rql, "Bad HTTP version") ;
+    if (rql.http_minor > 1) eexit_400(&rql, "Bad HTTP version") ;
 
     content_length = 0 ;
     tipidee_headers_init(&hdr, hdrbuf, HDR_BUFSIZE) ;
@@ -266,11 +417,11 @@ int main (int argc, char const *const *argv, char const *const *envp)
     {
       case -1 : log_and_exit(1) ;  /* connection issue, client timeout, etc. */
       case 0 : break ;
-      case 400 : exit_400(&rql, "Syntax error in headers") ;
-      case 408 : exit_408(&rql) ;  /* timeout */
-      case 413 : exit_413(&rql, hdr.n >= TIPIDEE_HEADERS_MAX ? "Too many headers" : "Too much header data") ;
-      case 500 : die500x(&rql, 101, "can't happen: ", "avltreen_insert failed") ;
-      default : die500x(&rql, 101, "can't happen: ", "unknown tipidee_headers_parse return code") ;
+      case 400 : eexit_400(&rql, "Syntax error in headers") ;
+      case 408 : eexit_408(&rql) ;  /* timeout */
+      case 413 : eexit_413(&rql, hdr.n >= TIPIDEE_HEADERS_MAX ? "Too many headers" : "Too much header data") ;
+      case 500 : strerr_dief2x(101, "can't happen: ", "avltreen_insert failed") ;
+      default : strerr_dief2x(101, "can't happen: ", "unknown tipidee_headers_parse return code") ;
     }
 
     if (!rql.http_minor) g.cont = 0 ;
@@ -287,7 +438,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
     x = tipidee_headers_search(&hdr, "Transfer-Encoding") ;
     if (x)
     {
-      if (strcasecmp(x, "chunked")) exit_400(&rql, "unsupported Transfer-Encoding") ;
+      if (strcasecmp(x, "chunked")) eexit_400(&rql, "unsupported Transfer-Encoding") ;
       else tcoding = TIPIDEE_TRANSFERCODING_CHUNKED ;
     }
     else
@@ -295,7 +446,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
       x = tipidee_headers_search(&hdr, "Content-Length") ;
       if (x)
       {
-        if (!size_scan(x, &content_length)) exit_400(&rql, "Invalid Content-Length") ;
+        if (!size_scan(x, &content_length)) eexit_400(&rql, "Invalid Content-Length") ;
         else if (content_length) tcoding = TIPIDEE_TRANSFERCODING_FIXED ;
         else tcoding = TIPIDEE_TRANSFERCODING_NONE ;
       }
@@ -303,24 +454,97 @@ int main (int argc, char const *const *argv, char const *const *envp)
     }
 
     if (tcoding != TIPIDEE_TRANSFERCODING_NONE && rql.m != TIPIDEE_METHOD_POST)
-      exit_400(&rql, "only POST requests can have an entity body") ;
+      eexit_400(&rql, "only POST requests can have an entity body") ;
 
     // websocket
     x = tipidee_headers_search(&hdr, "Connection") ;
     if (x && !strncmp(x, "Upgrade", 7))
     {
       int r=ws_manage_websocket(&hdr, &g.readtto, &g.writetto);
+								
+								
+										 
+								   
+																	
+			   
+							   
+													
+																				   
+																							 
+																			 
+	 
+
+															   
+		  
+	 
+								
       if(r) {
           strerr_warn("websocket management complete") ;
           log_and_exit(0);
+				
       }
+																	
+						
+	 
+						   
+	 
+																  
+										 
+	 
+													 
+													
 
-      exit_400(&rql, "syntax error in websocket management") ;
+      eexit_400(&rql, "syntax error in websocket management") ;
+	 
+										 
+				
     }
     // else {
     //   strerr_warnfu2sys("websocket connection %s not managed", x) ;
     // }
+											  
+													   
+											  
+							  
+																				  
 
+										 
+
+					  
+	   
+										   
+		 
+																	 
+																										 
+																								 
+		   
+															 
+										  
+		   
+									   
+				 
+		 
+											 
+		 
+																					  
+		   
+																						 
+																 
+										  
+		   
+				 
+		 
+						 
+	   
+
+
+																					 
+
+																	  
+											 
+																												  
+	 
   }
+
   log_and_exit(0) ;
 }

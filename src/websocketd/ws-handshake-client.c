@@ -24,12 +24,19 @@
 #include <skalibs/unix-timed.h>
 // #include <skalibs/lolstdio.h>
 
+#include <tipidee/base64.h>
 #include "tipideed-internal.h"
 
 #define USAGE "ws-handshake-client [ -v verbosity ] [ -f cdbfile ]"
 #define dieusage() strerr_dieusage(100, USAGE)
 
 struct global_s g = GLOBAL_ZERO ;
+
+void log_and_exit (int e)
+{
+  tipidee_log_exit(g.logv, e) ;
+  _exit(e) ;
+}
 
 static uint32_t get_uint32 (char const *key) {
 	uint32_t n ;
@@ -63,8 +70,7 @@ int main (int argc, char const *const *argv, char const *const *envp) {
 				  unsigned int n ;
 				  if (!uint0_scan(l.arg, &n)) dieusage() ;
 				  if (n > 7) n = 7 ;
-				  g.verbosity = n ;
-				  gotv = 1 ;
+				  g.logv = n ;
 				  break ;
 				}
 				case 'f' : conffile = l.arg ; break ;
@@ -77,11 +83,13 @@ int main (int argc, char const *const *argv, char const *const *envp) {
 		g.envlen = env_len(envp) ;
 		if (!tipidee_conf_init(&g.conf, conffile))
 			strerr_diefu2sys(111, "find configuration in ", conffile) ;
-		if (!gotv) g.verbosity = get_uint32("G:verbosity") ;
+		if (!gotv) g.logv = get_uint32("G:logv") ;
 	}
 	
 	inittto(&g.readtto, "G:read_timeout");
 	inittto(&g.writetto, "G:write_timeout");
+	
+	strerr_warn("check standalone or test usage") ;
 	
 	char const *x = getenv("PROTO") ;
 	if(x && !strncmp(x, "TCP", 3) ) {
@@ -89,9 +97,11 @@ int main (int argc, char const *const *argv, char const *const *envp) {
 		buffer_1->fd = 7;
 	}
 	
+	strerr_warn("fill request");
+
 	// fill request 
-	buffer_putsnoflush(buffer_1, "GET ws://127.0.0.1:8080/test HTTP/1.1\x0d\x0a");
-    buffer_putsnoflush(buffer_1, "Host: 127.0.0.1:8080\x0d\x0a");
+	buffer_putsnoflush(buffer_1, "GET / HTTP/1.1\x0d\x0a");
+    buffer_putsnoflush(buffer_1, "Host: 127.0.0.1:8300\x0d\x0a");
     buffer_putsnoflush(buffer_1, "Connection: Upgrade\x0d\x0a");
     buffer_putsnoflush(buffer_1, "User-Agent: ws-handshake-client/1.0\x0d\x0a");
     buffer_putsnoflush(buffer_1, "Upgrade: websocket\x0d\x0a");
@@ -109,12 +119,25 @@ int main (int argc, char const *const *argv, char const *const *envp) {
     buffer_putsnoflush(buffer_1, "Sec-WebSocket-Extension: permessage-deflate; client_max_window_bits\x0d\x0a");
     buffer_putsnoflush(buffer_1, "\x0d\x0a");
 
-    {
+    strerr_warn("send request") ;
+	
+	{
         tain deadline;
         tain_add_g(&deadline, &g.writetto);
         if (!buffer_timed_flush_g(buffer_1, &deadline))
             strerr_diefu1sys(111, "write to stdout");
     }
+
+	{
+        tain deadline;
+        tain_add_g(&deadline, &g.readtto);
+		char buf[1024];
+		
+        if (!buffer_timed_get_g(buffer_0, buf, 1024, &deadline))
+            strerr_diefu1sys(111, "read from stdin");
+    }
+
+	strerr_warn("exit") ;
 
 	log_and_exit(0) ; 
 }

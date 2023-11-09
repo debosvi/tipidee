@@ -22,7 +22,7 @@ void debug_hdr(unsigned char const* hdr) {
 
 typedef struct ws_stream_s ws_stream, *ws_stream_ref;
 struct ws_stream_s {
-	uint64 size;
+	uint64_t size;
 	unsigned char mask_d[4];
 	unsigned char mask_b;
 	unsigned char opcode;
@@ -33,8 +33,7 @@ struct ws_stream_s {
 
 int ws_mainstream(tain const *readtto, tain const *writetto) {
     tain deadline ;    
-
-    ws_stream stream;
+	ws_stream stream;
 
     // step 0 read 2 1st byte
     // step 1 read size as 16 bits wide
@@ -45,30 +44,31 @@ int ws_mainstream(tain const *readtto, tain const *writetto) {
 
     int step=0;
     int cont=1;
-    while(cont) {
+    while(cont>0) {
         LOLDEBUG("step %d", step);
         switch(step) {
         case 0:
-        {    
-			unsigned char hdr[2];
-            tain_add_g(&deadline, readtto) ;
-			if(buffer_timed_get_g(buffer_0, (char*)hdr, 2, &deadline)) {
-				debug_hdr(hdr);
-                stream.opcode=M_OPCODE(hdr);
-                stream.size=M_SIZE(hdr);
-                stream.mask_b=M_MASK(hdr);
+			{    
+				unsigned char hdr[2];
+				tain_add_g(&deadline, readtto) ;
+				if(buffer_timed_get_g(buffer_0, (char*)hdr, 2, &deadline)) {
+					debug_hdr(hdr);
+					stream.opcode=M_OPCODE(hdr);
+					stream.size=M_SIZE(hdr);
+					stream.mask_b=M_MASK(hdr);
 
-                if(stream.size==126) step=1;
-                else if(stream.size==127) step=2;
-                else step=3;
-            }
-        }
-		break;
+					if(stream.size==126) step=1;
+					else if(stream.size==127) step=2;
+					else step=3;
+				}
+				else cont=-1;
+			}
+			break;
 
         case 1:
 			{
 				unsigned char d[2];
-				uint16 s=0;
+				uint16_t s=0;
 				if(buffer_timed_get_g(buffer_0, (char*)d, 2, &deadline)) {
 					LOLDEBUG("126 length: %02x %02x", d[0], d[1]);
 					uint16_unpack_big((char*)d, &s);
@@ -76,13 +76,14 @@ int ws_mainstream(tain const *readtto, tain const *writetto) {
 					stream.size=s;
 					step=3;
 				}
+				else cont=-1;
 			}
             break;
 
         case 2:
 			{
 				unsigned char d[8];
-				uint64 s=0;
+				uint64_t s=0;
 				if(buffer_timed_get_g(buffer_0, (char*)d, 8, &deadline)) {
 					LOLDEBUG("127 length: %02x %02x %02x %02x %02x %02x %02x %02x", d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]);
 					uint64_unpack_big((char*)d, &s);
@@ -90,6 +91,7 @@ int ws_mainstream(tain const *readtto, tain const *writetto) {
 					stream.size=s;
 					step=3;
 				}
+				else cont=-1;
 			}
             break;
 
@@ -97,24 +99,28 @@ int ws_mainstream(tain const *readtto, tain const *writetto) {
 			LOLDEBUG("real size: %llu", stream.size);
             if(!stream.mask_b) {
             }
-            else if(buffer_timed_get_g(buffer_0, (char*)stream.mask_d, 4, &deadline)) {
-				LOLDEBUG("mask data: %02x %02x %02x %02x",
-					stream.mask_d[0], stream.mask_d[1], stream.mask_d[2], stream.mask_d[3]);
+            else {
+				if(buffer_timed_get_g(buffer_0, (char*)stream.mask_d, 4, &deadline)) {
+					LOLDEBUG("mask data: %02x %02x %02x %02x",
+						stream.mask_d[0], stream.mask_d[1], stream.mask_d[2], stream.mask_d[3]);
+				}
+				else cont=-1;
 			}
             step=4;
             break;
 
         case 4:
-		{
-            char data[stream.size];
-            if(buffer_timed_get_g(buffer_0, data, stream.size, &deadline)) {
-                for(int i=0; i<stream.size; i++) {
-					register char c=(data[i]^stream.mask_d[i%4]);
-					data[i] = c;
+			{
+				char data[stream.size];
+				if(buffer_timed_get_g(buffer_0, data, stream.size, &deadline)) {
+					for(int i=0; i<stream.size; i++) {
+						register char c=(data[i]^stream.mask_d[i%4]);
+						data[i] = c;
+					}
+					LOLDEBUG("data received: %s", data);
 				}
-				LOLDEBUG("data received: %s", data);
+				else cont=-1;
 			}
-		}
             step=127;
             break;
 
@@ -123,7 +129,7 @@ int ws_mainstream(tain const *readtto, tain const *writetto) {
             cont=0;
             break;
 
-       default:
+		default:
             LOLDEBUG("switch not managed");
             cont=0;
             break;
@@ -131,6 +137,6 @@ int ws_mainstream(tain const *readtto, tain const *writetto) {
     }
     LOLDEBUG("loop finished");
 
-    if (stream.opcode==8) return -1;
+    if ((cont<0) || (stream.opcode==8)) return -1;
 	return 1;
 }

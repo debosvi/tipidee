@@ -111,7 +111,6 @@ tipideed: \
 	src/tipideed/tipideed.o \
 	src/tipideed/cgi.o \
 	src/tipideed/harden.o \
-	src/tipideed/log.o \
 	src/tipideed/options.o \
 	src/tipideed/regular.o \
 	src/tipideed/responses.o \
@@ -122,7 +121,6 @@ tipideed: \
 websocketd: EXTRA_LIBS := -lskarnet -lnettle
 websocketd: \
 	src/websocketd/websocketd.o \
-	src/websocketd/log.o \
 	src/websocketd/responses.o \
 	src/websocketd/trace.o \
 	libtipidee.a.xyzzy \
@@ -131,7 +129,6 @@ websocketd: \
 ws-handshake-client: EXTRA_LIBS := -lskarnet -lnettle
 ws-handshake-client: \
 	src/websocketd/ws-handshake-client.o \
-	src/websocketd/log.o \
 	libtipidee.a.xyzzy \
 	libtipideews.a.xyzzy 
 

@@ -1,0 +1,12 @@
+server part
+
+s6-tcpserver -v -- 127.0.0.1 8080 websocketd -v3 -f tipidee.conf.cdb
+
+client part 
+nginx proxy (see nginx conf)
+s6-tcpclient 127.0.0.1 8300 ws-handshake-client 
+
+nginx proxy
+s6-tcpclient 127.0.0.1 8080 ws-handshake-client 
+
+
